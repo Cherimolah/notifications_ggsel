@@ -32,6 +32,11 @@ class Notification(BaseModel):
     ISMYPRODUCT: bool
 
 
+@app.get('/')
+async def index():
+    return PlainTextResponse('welcome', status_code=200)
+
+
 @app.post('/notification')
 async def notification_route(notification: Notification):
     products = await ggsel.get_all_products()
