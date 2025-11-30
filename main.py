@@ -10,15 +10,16 @@ from config import TELEGRAM_TOKEN, GGSEL_TOKEN, ADMIN_ID
 from ggsel import GGSel
 
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await ggsel.connect()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 bot = Bot(token=TELEGRAM_TOKEN)
 ggsel = GGSel(GGSEL_TOKEN)
 
-
-@asynccontextmanager
-async def startup(app: FastAPI):
-    await ggsel.connect()
-    yield
 
 
 class Notification(BaseModel):

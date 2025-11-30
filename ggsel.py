@@ -39,7 +39,6 @@ class GGSel:
         async with ClientSession() as session:
             response = await session.post(BASE_URL + '/api_sellers/api/apilogin', json=payload, headers=HEADERS)
             data = await response.json()
-            print(data)
         self.token = data['token']
         valid_through = datetime.datetime.strptime(data['valid_thru'][:-2], '%Y-%m-%dT%H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc)
         now = datetime.datetime.now(datetime.timezone.utc)
