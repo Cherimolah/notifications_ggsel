@@ -37,7 +37,7 @@ async def notification_route(notification: Notification):
     products = await ggsel.get_all_products()
     for product in products.rows:
         if notification.ID_D == product.id_goods:
-            await bot.send_message(ADMIN_ID, f'Ахуеть! Какой-то кельпастник купил {product.name_goods}!\n'
+            await bot.send_message(ADMIN_ID, f'Афигеть! Какой-то кельпастник купил {product.name_goods}!\n'
                                              f'Выдай ему товар\n'
                                              f'Дополнительная информация: {notification}')
             return PlainTextResponse('ok', status_code=200)
