@@ -1,7 +1,9 @@
+import json
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
+from fastapi.requests import Request
 from aiogram import Bot
 from pydantic import BaseModel
 import uvicorn
@@ -39,15 +41,10 @@ async def index():
 
 
 @app.post('/notification')
-async def notification_route(notification: Notification):
-    products = await ggsel.get_all_products()
-    for product in products.rows:
-        if notification.ID_D == product.id_goods:
-            await bot.send_message(ADMIN_ID, f'Афигеть! Какой-то кельпастник купил {product.name_goods}!\n'
-                                             f'Выдай ему товар\n'
-                                             f'Дополнительная информация: {notification}')
-            return PlainTextResponse('ok', status_code=200)
-    return PlainTextResponse('who are you?', status_code=403)
+async def notification_route(request: Request):
+    await bot.send_message(ADMIN_ID,
+                           'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
+                           f'{json.loads(await request.body())}')
 
 
 if __name__ == '__main__':
