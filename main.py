@@ -44,7 +44,7 @@ async def index():
 async def notification_route(request: Request):
     await bot.send_message(ADMIN_ID,
                            'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
-                           f'{json.loads(await request.body())}')
+                           f'{await request.body()}')
 
 
 if __name__ == '__main__':
