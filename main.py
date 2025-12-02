@@ -45,6 +45,7 @@ async def notification_route(request: Request):
     await bot.send_message(ADMIN_ID,
                            'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
                            f'{await request.body()}')
+    return PlainTextResponse('thx', status_code=200)
 
 
 if __name__ == '__main__':
