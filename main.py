@@ -40,7 +40,7 @@ async def index():
     return PlainTextResponse('welcome', status_code=200)
 
 
-@app.post('/notification')
+@app.route('/notification', methods=['POST', 'GET'])
 async def notification_route(request: Request):
     await bot.send_message(ADMIN_ID,
                            'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
