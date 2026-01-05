@@ -5,10 +5,9 @@ import datetime
 
 from aiohttp import ClientSession
 
-from models import *
+from models import SalesResponse, ProductsResponseModel, OrderResponse, ProductResponse
 
 from config import SELLER_ID
-
 
 BASE_URL = "https://seller.ggsel.net"
 
@@ -40,7 +39,8 @@ class GGSel:
             response = await session.post(BASE_URL + '/api_sellers/api/apilogin', json=payload, headers=HEADERS)
             data = await response.json()
         self.token = data['token']
-        valid_through = datetime.datetime.strptime(data['valid_thru'][:-2], '%Y-%m-%dT%H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc)
+        valid_through = datetime.datetime.strptime(data['valid_thru'][:-2], '%Y-%m-%dT%H:%M:%S.%f').replace(
+            tzinfo=datetime.timezone.utc)
         now = datetime.datetime.now(datetime.timezone.utc)
         timeout = (valid_through - now).total_seconds()
         asyncio.create_task(self.update_token(timeout=timeout))
@@ -48,7 +48,6 @@ class GGSel:
     async def update_token(self, timeout: float):
         await asyncio.sleep(timeout)
         await self.connect()
-
 
     async def get_all_products(self, ids: list[int] = None, page: int = 1, count: int = 10) -> ProductsResponseModel:
         # API Docs: https://seller.ggsel.net/docs/return-all-products
@@ -67,3 +66,37 @@ class GGSel:
             response = await session.get(BASE_URL + url, params=params, headers=HEADERS)
             data = await response.text()
         return ProductsResponseModel.model_validate_json(data)
+
+    async def get_last_sales(self, group: bool = None, top: int = 10) -> SalesResponse:
+        url = '/api_sellers/api/seller-last-sales'
+        params = {
+            'token': self.token,
+            'top': top
+        }
+        if group is not None:
+            params['group'] = group
+        async with ClientSession() as session:
+            response = await session.get(BASE_URL + url, params=params, headers=HEADERS)
+            data = await response.text()
+        return SalesResponse.model_validate_json(data)
+
+    async def get_order_info(self, invoice_id: int) -> OrderResponse:
+        url = f'/api_sellers/api/purchase/info/{invoice_id}'
+        params = {
+            'token': self.token
+        }
+        async with ClientSession() as session:
+            response = await session.get(BASE_URL + url, params=params, headers=HEADERS)
+            data = await response.text()
+        return OrderResponse.model_validate_json(data)
+
+    async def get_product_info(self, product_id: int) -> ProductResponse:
+        url = f'/api_sellers/api/products/{product_id}/data'
+        params = {
+            'token': self.token
+        }
+        async with ClientSession() as session:
+            response = await session.get(BASE_URL + url, params=params, headers=HEADERS)
+            data = await response.text()
+        return ProductResponse.model_validate_json(data)
+
