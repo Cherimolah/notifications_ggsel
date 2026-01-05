@@ -21,8 +21,8 @@ from database import connect, Invoices, db
 async def lifespan(app: FastAPI):
     await ggsel.connect()
     await connect()
-    asyncio.create_task(poll_orders())
-    asyncio.create_task(long_poll())
+    # asyncio.create_task(poll_orders())
+    # asyncio.create_task(long_poll())
     yield
 
 app = FastAPI(lifespan=lifespan)
