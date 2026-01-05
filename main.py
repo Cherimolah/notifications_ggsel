@@ -93,6 +93,7 @@ async def poll_orders():
                          f'📋 **Заказ №:** {order.content.content_id}\n'
                          f'💰 **Сумма заказа:** {order.content.amount} ₽\n'
                          f'💳 **К выплате:** {order.content.profit} ₽\n'
+                         f'👤 **Покупатель:** {order.content.buyer_info.account}\n'
                          f'📅 **Дата оплаты:** {order.content.date_pay}')
                 keyboard = InlineKeyboardMarkup(inline_keyboard=[[
                     InlineKeyboardButton(text='Ссылка на заказ', url=f'https://seller.ggsel.net/orders/{invoice_id}')
