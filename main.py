@@ -4,9 +4,11 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from fastapi.requests import Request
-from aiogram import Bot
+from aiogram import Bot, Dispatcher
 from pydantic import BaseModel
 from aiogram.enums.parse_mode import ParseMode
+from aiogram.filters.command import CommandStart
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 import uvicorn
 
 from config import TELEGRAM_TOKEN, GGSEL_TOKEN, ADMIN_ID
@@ -20,10 +22,12 @@ async def lifespan(app: FastAPI):
     await ggsel.connect()
     await connect()
     asyncio.create_task(poll_orders())
+    asyncio.create_task(long_poll())
     yield
 
 app = FastAPI(lifespan=lifespan)
 bot = Bot(token=TELEGRAM_TOKEN)
+dp = Dispatcher()
 ggsel = GGSel(GGSEL_TOKEN)
 
 
@@ -49,6 +53,13 @@ async def notification_route(request: Request):
                            'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
                            f'{await request.body()}')
     return PlainTextResponse('thx', status_code=200)
+
+
+@dp.message(CommandStart())
+async def command_start(m: Message):
+    await m.answer('Привет! 👋\n'
+                   'Я — твой персональный помощник для отслеживания покупок на GGsel.\n\n'
+                   'Я буду своевременно присылать тебе уведомления о новых покупках, изменениях статуса заказов и другой важной информации с твоего аккаунта.')
 
 
 async def poll_orders():
@@ -83,9 +94,16 @@ async def poll_orders():
                          f'💰 **Сумма заказа:** {order.content.amount} ₽\n'
                          f'💳 **К выплате:** {order.content.profit} ₽\n'
                          f'📅 **Дата оплаты:** {order.content.date_pay}')
-                await bot.send_message(ADMIN_ID, reply, parse_mode=ParseMode.MARKDOWN)
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+                    InlineKeyboardButton(text='Ссылка на заказ', url=f'https://seller.ggsel.net/orders/{invoice_id}')
+                ]])
+                await bot.send_message(ADMIN_ID, reply, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
                 await Invoices.update.values(sent=True).where(Invoices.invoice_id == invoice_id).gino.status()
         await asyncio.sleep(60)
+
+
+async def long_poll():
+    await dp.start_polling(bot)
 
 
 if __name__ == '__main__':
