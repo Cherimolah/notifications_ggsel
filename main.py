@@ -21,7 +21,7 @@ from database import connect, Invoices, db
 async def lifespan(app: FastAPI):
     await ggsel.connect()
     await connect()
-    # asyncio.create_task(poll_orders())
+    asyncio.create_task(poll_orders())
     # asyncio.create_task(long_poll())
     yield
 
@@ -64,12 +64,16 @@ async def command_start(m: Message):
 
 async def poll_orders():
     sales = (await ggsel.get_last_sales(top=100)).sales
+    print(len(sales))
     invoice_ids = [x.invoice_id for x in sales]
     for invoice_id in invoice_ids:
         exist = await db.select([Invoices.id]).where(Invoices.invoice_id == invoice_id).gino.scalar()
         if not exist:
             order = await ggsel.get_order_info(invoice_id)
             await Invoices.create(invoice_id=invoice_id, status=order.content.invoice_state.value, item_id=order.content.item_id, sent=True)
+            product = await ggsel.get_product_info(order.content.item_id)
+            print(f'{product.product.name} {order.content.invoice_state}')
+    return
     while True:
         sales = (await ggsel.get_last_sales(top=10)).sales
         invoice_ids = [x.invoice_id for x in sales]
