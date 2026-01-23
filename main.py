@@ -68,7 +68,6 @@ async def index():
 
 @app.post('/check')
 async def check_order_params(check_params: CheckParams, task: BackgroundTasks):
-    print(check_params)
     item = await ggsel.get_product_info(check_params.product.id)
     reply = f'Хмммм, какой-то кельпастник собирается купить {item.product.name}'
     for option in check_params.options:
