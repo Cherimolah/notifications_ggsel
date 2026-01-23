@@ -21,7 +21,7 @@ from database import connect, Invoices, db
 async def lifespan(app: FastAPI):
     await ggsel.connect()
     await connect()
-    asyncio.create_task(poll_orders())
+    # asyncio.create_task(poll_orders())
     # asyncio.create_task(long_poll())
     yield
 
@@ -53,6 +53,12 @@ async def notification_route(request: Request):
                            'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
                            f'{await request.body()}')
     return PlainTextResponse('thx', status_code=200)
+
+
+@app.route('/check', methods=['POST', 'GET'])
+async def check_order_params(request: Request):
+    print(await request.body())
+    print(request.method)
 
 
 @dp.message(CommandStart())
