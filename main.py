@@ -1,9 +1,9 @@
 from contextlib import asynccontextmanager
 import asyncio
+import re
 
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import PlainTextResponse
-from fastapi.requests import Request
 from aiogram import Bot, Dispatcher
 from pydantic import BaseModel
 from aiogram.enums.parse_mode import ParseMode
@@ -29,17 +29,36 @@ app = FastAPI(lifespan=lifespan)
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
 ggsel = GGSel(GGSEL_TOKEN)
+email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 
 class Notification(BaseModel):
-    ID_I: int
-    ID_D: int
-    Amount: int
-    Currency: str
+    id_i: int
+    id_d: int
+    amount: int
+    currency: str
     email: str
-    Date: str
+    date: str
+    ip: str
     SHA256: str
-    ISMYPRODUCT: bool
+    is_my_product: bool
+
+
+class Product(BaseModel):
+    id: int
+    cnt: float
+    lang: str
+
+
+class Option(BaseModel):
+    id: int
+    type: str
+    value: str | int
+
+
+class CheckParams(BaseModel):
+    product: Product
+    options: list[Option]
 
 
 @app.get('/')
@@ -47,18 +66,29 @@ async def index():
     return PlainTextResponse('welcome', status_code=200)
 
 
-@app.route('/notification', methods=['POST', 'GET'])
-async def notification_route(request: Request):
-    await bot.send_message(ADMIN_ID,
-                           'Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
-                           f'{await request.body()}')
+@app.post('/check')
+async def check_order_params(check_params: CheckParams, task: BackgroundTasks):
+    item = await ggsel.get_product_info(check_params.product.id)
+    reply = f'Хмммм, какой-то кельпастник собирается купить {item.product.name}'
+    for option in check_params.options:
+        if option.type == 'text':
+            if not re.match(email_pattern, option.value):
+                return PlainTextResponse('invalid email', status_code=400)
+    task.add_task(bot.send_message, ADMIN_ID, reply)
     return PlainTextResponse('thx', status_code=200)
 
 
-@app.route('/check', methods=['POST', 'GET'])
-async def check_order_params(request: Request):
-    print(await request.body())
-    print(request.method)
+@app.post('/notification')
+async def notification_route(notification: Notification, task: BackgroundTasks):
+    item = await ggsel.get_product_info(notification.id_d)
+    reply = f'🛒 Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
+    reply += (f'Товар: {item.product.name}\n'
+              f'Стоимость: {item.product.price}\n\n')
+    order = await ggsel.get_order_info(notification.id_i)
+    reply += '⚙️ Параметры заказа:\n'
+    for option in order.content.options:
+        reply += f'• {option.name}: {option.user_data}\n'
+    task.add_task(bot.send_message, ADMIN_ID, reply)
     return PlainTextResponse('thx', status_code=200)
 
 
