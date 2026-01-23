@@ -59,6 +59,7 @@ async def notification_route(request: Request):
 async def check_order_params(request: Request):
     print(await request.body())
     print(request.method)
+    return PlainTextResponse('thx', status_code=200)
 
 
 @dp.message(CommandStart())
