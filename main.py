@@ -105,7 +105,7 @@ async def notification_route(notification: Notification, task: BackgroundTasks):
     task.add_task(send_verification_code, email, code)
     task.add_task(ggsel.send_message, notification.id_i,
                   f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру «{game}».\n'
-                  f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товарю\n'
+                  f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
                   f'Если код не пришел, напишите в чате, отправим вручную повторно')
     return PlainTextResponse('thx', status_code=200)
 
