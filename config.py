@@ -16,3 +16,7 @@ DB_PORT = int(os.getenv('DB_PORT'))
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
+
+FULL_NAME = os.getenv('FULL_NAME')
+USER_ID = os.getenv('USER_ID')
+USER_NAME = os.getenv('USER_NAME')

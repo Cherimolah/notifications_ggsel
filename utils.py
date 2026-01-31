@@ -1,0 +1,49 @@
+import asyncio
+from typing import Literal
+
+from aiohttp import ClientSession
+
+from config import FULL_NAME, USER_NAME, USER_ID
+
+
+headers = {
+    'Accept': '*/*',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Accept-Language': 'ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7',
+    'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
+    'Host': 'api.nexus-shop.ru',
+    'Origin': 'https://miniapp.nexus-shop.ru',
+    'Pragma': 'no-cache',
+    'Referer': 'https://miniapp.nexus-shop.ru/',
+    'Sec-Ch-Ua': '"Not(A:Brand";v="8", "Chromium";v="144", "Microsoft Edge";v="144", "Microsoft Edge WebView2";v="144"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': 'Windows',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-site',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0'
+}
+
+
+async def send_verification_code(email: str, game: Literal['scroll', 'laser']) -> bool:
+    assert game in ('scroll', 'laser', 'magic')
+    data = {
+        'userId': USER_ID,
+        'fullName': FULL_NAME,
+        'userName': USER_NAME
+    }
+    async with ClientSession() as session:
+        response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
+        data = await response.json()
+    token = data['token']
+    await asyncio.sleep(3)
+    url = 'https://api.nexus-shop.ru/api/Supercell/login'
+    data = {
+        'game': game,
+        'email': email,
+    }
+    headers['Authorization'] = f'Bearer {token}'
+    async with ClientSession() as session:
+        response = await session.post(url, headers=headers, json=data)
+    return response.status == 200
