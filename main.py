@@ -94,7 +94,7 @@ async def notification_route(notification: Notification, task: BackgroundTasks):
     email = None
     for option in order.content.options:
         reply += f'• {option.name}: {option.user_data}\n'
-        if 'email' in option.name.lower():
+        if 'id' in option.name.lower():
             email = option.user_data
     task.add_task(bot.send_message, ADMIN_ID, reply)
     for game, code in game_codes.items():
