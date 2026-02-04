@@ -13,7 +13,7 @@ from config import GGSEL_TOKEN, ADMIN_ID, SELLER_ID
 from ggsel import GGSel
 from database import connect
 from utils import send_verification_code
-from loader import Bot
+from loader import bot
 
 
 @asynccontextmanager
