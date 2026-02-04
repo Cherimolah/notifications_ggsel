@@ -3,16 +3,17 @@ import re
 
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import PlainTextResponse
-from aiogram import Bot, Dispatcher
+from aiogram import Dispatcher
 from pydantic import BaseModel
 from aiogram.filters.command import CommandStart
 from aiogram.types import Message
 import uvicorn
 
-from config import TELEGRAM_TOKEN, GGSEL_TOKEN, ADMIN_ID, SELLER_ID
+from config import GGSEL_TOKEN, ADMIN_ID, SELLER_ID
 from ggsel import GGSel
 from database import connect
 from utils import send_verification_code
+from loader import Bot
 
 
 @asynccontextmanager
@@ -23,7 +24,6 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
 ggsel = GGSel(GGSEL_TOKEN, SELLER_ID)
 email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'

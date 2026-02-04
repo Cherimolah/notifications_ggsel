@@ -5,7 +5,8 @@ from string import ascii_lowercase
 
 from aiohttp import ClientSession
 
-from config import FULL_NAME, USER_NAME, USER_ID
+from loader import bot
+
 
 
 headers = {
@@ -30,8 +31,9 @@ headers = {
 
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
+    user_id = random.randint(1, 100000000)
     data = {
-        'userId': random.randint(1, 100000000),
+        'userId': user_id,
         'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
         'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
     }
@@ -41,14 +43,15 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     token = data['token']
     print(token)
     await asyncio.sleep(3)
+    headers['Authorization'] = f'Bearer {token}'
     url = 'https://api.nexus-shop.ru/api/Supercell/login'
     data = {
         'game': game,
         'email': email,
     }
-    headers['Authorization'] = f'Bearer {token}'
     async with ClientSession() as session:
         response = await session.post(url, headers=headers, json=data)
         data = await response.text()
     print(data)
+    await bot.send_message(761561340, 'Код успешно доставлен')
     return response.status == 200
