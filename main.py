@@ -32,7 +32,7 @@ email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 class Notification(BaseModel):
     id_i: int
     id_d: int
-    amount: int
+    amount: float
     currency: str
     email: str
     date: str

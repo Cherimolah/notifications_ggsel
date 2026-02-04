@@ -7,15 +7,15 @@ from aiohttp import ClientSession
 
 from models import LastSalesResponse, ProductsAllResponse, OrderInfoResponse, ProductInfoResponse
 
-BASE_URL = "https://seller.ggsel.net"
+BASE_URL = "https://seller.ggsel.com"
 
 HEADERS = {
     "Accept": "application/json, text/plain, */*",
     "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
-    "Referer": "https://seller.ggsel.net/",
-    "Origin": "https://seller.ggsel.net",
+    "Referer": "https://seller.ggsel.com/",
+    "Origin": "https://seller.ggsel.com",
     'locale': 'ru',
     'lang': 'ru-RU'
 }

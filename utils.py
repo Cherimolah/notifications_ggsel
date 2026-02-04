@@ -1,5 +1,7 @@
 import asyncio
+import random
 from typing import Literal
+from string import ascii_lowercase
 
 from aiohttp import ClientSession
 
@@ -26,17 +28,18 @@ headers = {
 }
 
 
-async def send_verification_code(email: str, game: Literal['scroll', 'laser']) -> bool:
+async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
     data = {
-        'userId': USER_ID,
-        'fullName': FULL_NAME,
-        'userName': USER_NAME
+        'userId': random.randint(1, 100000000),
+        'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
+        'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
     }
     async with ClientSession() as session:
         response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
         data = await response.json()
     token = data['token']
+    print(token)
     await asyncio.sleep(3)
     url = 'https://api.nexus-shop.ru/api/Supercell/login'
     data = {
@@ -46,4 +49,6 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser']) -
     headers['Authorization'] = f'Bearer {token}'
     async with ClientSession() as session:
         response = await session.post(url, headers=headers, json=data)
+        data = await response.text()
+    print(data)
     return response.status == 200
