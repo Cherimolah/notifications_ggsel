@@ -1,4 +1,5 @@
 import asyncio
+import json
 import random
 from typing import Literal
 from string import ascii_lowercase
@@ -42,6 +43,10 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         data = await response.json()
     token = data['token']
     print(token)
+    data = {"userId":709123898,"gameId":9,"gameLink":email}
+    await asyncio.sleep(3)
+    async with ClientSession() as session:
+        await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
     await asyncio.sleep(3)
     headers['Authorization'] = f'Bearer {token}'
     url = 'https://api.nexus-shop.ru/api/Supercell/login'
@@ -52,6 +57,13 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     async with ClientSession() as session:
         response = await session.post(url, headers=headers, json=data)
         data = await response.text()
-    print(data)
-    await bot.send_message(761561340, 'Код успешно доставлен')
-    return response.status == 200
+    try:
+        data = json.loads(data)
+        await bot.send_message(761561340, 'Код успешно доставлен')
+    except:
+        await bot.send_message(761561340, f'Ошибка доставки кода {data}')
+        return False
+    if not data['ok'] is True:
+        await bot.send_message(761561340, f'Ошибка доставки кода {data}')
+        return False
+    return True
