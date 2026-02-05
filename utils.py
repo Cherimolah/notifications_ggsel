@@ -7,6 +7,7 @@ from string import ascii_lowercase
 from aiohttp import ClientSession
 
 from loader import bot
+from config import USER_ID
 
 
 
@@ -42,7 +43,6 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
         data = await response.json()
     token = data['token']
-    print(token)
     data = {"userId":709123898,"gameId":9,"gameLink":email}
     await asyncio.sleep(3)
     async with ClientSession() as session:
@@ -59,11 +59,11 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         data = await response.text()
     try:
         data = json.loads(data)
-        await bot.send_message(761561340, 'Код успешно доставлен')
+        await bot.send_message(USER_ID, 'Код успешно доставлен')
     except:
-        await bot.send_message(761561340, f'Ошибка доставки кода {data}')
+        await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
         return False
     if not data['ok'] is True:
-        await bot.send_message(761561340, f'Ошибка доставки кода {data}')
+        await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
         return False
     return True
