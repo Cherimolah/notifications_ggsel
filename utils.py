@@ -54,16 +54,19 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         'game': game,
         'email': email,
     }
-    async with ClientSession() as session:
-        response = await session.post(url, headers=headers, json=data)
-        data = await response.text()
-    try:
-        data = json.loads(data)
-        await bot.send_message(USER_ID, 'Код успешно доставлен')
-    except:
-        await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-        return False
-    if not data['ok'] is True:
-        await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-        return False
-    return True
+    for _ in range(3):
+        async with ClientSession() as session:
+            response = await session.post(url, headers=headers, json=data)
+            data = await response.text()
+        try:
+            data = json.loads(data)
+        except:
+            await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+            continue
+        if not data['ok'] is True:
+            await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+            continue
+        else:
+            await bot.send_message(USER_ID, 'Код успешно доставлен')
+            return True
+    return False
