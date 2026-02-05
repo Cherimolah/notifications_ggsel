@@ -10,6 +10,12 @@ from loader import bot
 from config import USER_ID
 
 
+game_ids = {
+    'scroll': 9,
+    'laser': 11,
+    'magic': 8
+}
+
 
 headers = {
     'Accept': '*/*',
@@ -43,7 +49,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
         data = await response.json()
     token = data['token']
-    data = {"userId":709123898,"gameId":9,"gameLink":email}
+    data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
     await asyncio.sleep(3)
     async with ClientSession() as session:
         await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
@@ -54,7 +60,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         'game': game,
         'email': email,
     }
-    for _ in range(3):
+    for _ in range(5):
         async with ClientSession() as session:
             response = await session.post(url, headers=headers, json=data)
             data = await response.text()
@@ -62,9 +68,11 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             data = json.loads(data)
         except:
             await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+            await asyncio.sleep(3)
             continue
         if not data['ok'] is True:
             await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+            await asyncio.sleep(3)
             continue
         else:
             await bot.send_message(USER_ID, 'Код успешно доставлен')
