@@ -39,6 +39,8 @@ headers = {
 
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
+    if 'headers' in headers:
+        del headers['headers']
     user_id = random.randint(1, 100000000)
     data = {
         'userId': user_id,
@@ -49,12 +51,12 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
         data = await response.json()
     token = data['token']
+    headers['Authorization'] = f'Bearer {token}'
     data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
     await asyncio.sleep(3)
     async with ClientSession() as session:
         await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
     await asyncio.sleep(3)
-    headers['Authorization'] = f'Bearer {token}'
     url = 'https://api.nexus-shop.ru/api/Supercell/login'
     data = {
         'game': game,
