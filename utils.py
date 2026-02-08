@@ -72,7 +72,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
             await asyncio.sleep(3)
             continue
-        if not data['ok'] is True:
+        if not data.get('ok') is True:
             await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
             await asyncio.sleep(3)
             continue
