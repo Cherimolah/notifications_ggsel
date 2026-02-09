@@ -3,8 +3,10 @@ import json
 import random
 from typing import Literal
 from string import ascii_lowercase
+import subprocess
 
 from aiohttp import ClientSession, ClientTimeout
+from aiohttp_proxy import ProxyConnector
 
 from loader import bot
 from config import USER_ID
@@ -37,8 +39,18 @@ headers = {
 }
 
 
+def create_connector():
+    return ProxyConnector(
+        host='127.0.0.1',
+        port=9050,
+        proto='socks5',
+    )
+
+
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
+    subprocess.run(['systemctl', 'restart', 'xray'])
+    await asyncio.sleep(1)
     for _ in range(5):
         if 'Authorization' in headers:
             del headers['Authorization']
@@ -48,14 +60,14 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
             'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
         }
-        async with ClientSession() as session:
+        async with ClientSession(connector=create_connector()) as session:
             response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
             data = await response.json()
         token = data['token']
         headers['Authorization'] = f'Bearer {token}'
         data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
         await asyncio.sleep(3)
-        async with ClientSession() as session:
+        async with ClientSession(connector=create_connector()) as session:
             await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
         await asyncio.sleep(10)
         url = 'https://api.nexus-shop.ru/api/Supercell/login'
@@ -64,7 +76,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'email': email,
         }
         try:
-            async with ClientSession(timeout=ClientTimeout(10)) as session:
+            async with ClientSession(timeout=ClientTimeout(10), connector=create_connector()) as session:
                 response = await session.post(url, headers=headers, json=data)
                 data = await response.text()
             try:
