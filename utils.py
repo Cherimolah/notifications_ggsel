@@ -39,9 +39,6 @@ headers = {
 }
 
 
-def create_connector():
-    return ProxyConnector.from_url('socks5://127.0.0.1:9050')
-
 async def send_message(chat_id: int, text: str):
     for _ in range(3):
         try:
@@ -55,6 +52,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     assert game in ('scroll', 'laser', 'magic')
     subprocess.run(['systemctl', 'restart', 'tor'])
     await asyncio.sleep(5)
+    print('started')
     for _ in range(5):
         if 'Authorization' in headers:
             del headers['Authorization']
@@ -64,15 +62,17 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
             'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
         }
-        async with ClientSession(connector=create_connector()) as session:
+        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
             response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
             data = await response.json()
+        print(data)
         token = data['token']
         headers['Authorization'] = f'Bearer {token}'
         data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
         await asyncio.sleep(3)
-        async with ClientSession(connector=create_connector()) as session:
+        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
             await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
+        print('added')
         await asyncio.sleep(10)
         url = 'https://api.nexus-shop.ru/api/Supercell/login'
         data = {
@@ -80,9 +80,10 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'email': email,
         }
         try:
-            async with ClientSession(timeout=ClientTimeout(10), connector=create_connector()) as session:
+            async with ClientSession(timeout=ClientTimeout(10), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
                 response = await session.post(url, headers=headers, json=data)
                 data = await response.text()
+                print(data)
             try:
                 data = json.loads(data)
             except:
