@@ -6,7 +6,7 @@ from string import ascii_lowercase
 import subprocess
 
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp_proxy import ProxyConnector
+from aiohttp_socks import ProxyConnector
 
 from loader import bot
 from config import USER_ID
