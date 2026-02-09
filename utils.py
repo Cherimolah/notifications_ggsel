@@ -6,7 +6,7 @@ from string import ascii_lowercase
 import subprocess
 
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp_proxy import ProxyConnector, ProxyType
+from aiohttp_proxy import ProxyConnector
 
 from loader import bot
 from config import USER_ID
@@ -40,11 +40,7 @@ headers = {
 
 
 def create_connector():
-    return ProxyConnector(
-        host='127.0.0.1',
-        port=9050,
-        proxy_type=ProxyType.SOCKS5,
-    )
+    return ProxyConnector.from_url('socks5://127.0.0.1:9050')
 
 async def send_message(chat_id: int, text: str):
     for _ in range(3):
@@ -58,7 +54,7 @@ async def send_message(chat_id: int, text: str):
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
     subprocess.run(['systemctl', 'restart', 'tor'])
-    await asyncio.sleep(1)
+    await asyncio.sleep(5)
     for _ in range(5):
         if 'Authorization' in headers:
             del headers['Authorization']
