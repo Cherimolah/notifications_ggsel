@@ -53,7 +53,6 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     for _ in range(5):
         subprocess.run(['systemctl', 'restart', 'tor'])
         await asyncio.sleep(5)
-        print('started')
         if 'Authorization' in headers:
             del headers['Authorization']
         user_id = random.randint(1, 100000000)
@@ -65,15 +64,12 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
             response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
             data = await response.json()
-        print(data)
         token = data['token']
         headers['Authorization'] = f'Bearer {token}'
         data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
         await asyncio.sleep(3)
         async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
             await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
-        print('added')
-        await asyncio.sleep(10)
         url = 'https://api.nexus-shop.ru/api/Supercell/login'
         data = {
             'game': game,
@@ -83,7 +79,6 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             async with ClientSession(timeout=ClientTimeout(10), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
                 response = await session.post(url, headers=headers, json=data)
                 data = await response.text()
-                print(data)
             try:
                 data = json.loads(data)
             except:
