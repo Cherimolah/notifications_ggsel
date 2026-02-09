@@ -49,7 +49,7 @@ def create_connector():
 
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
-    subprocess.run(['systemctl', 'restart', 'xray'])
+    subprocess.run(['systemctl', 'restart', 'tor'])
     await asyncio.sleep(1)
     for _ in range(5):
         if 'Authorization' in headers:
