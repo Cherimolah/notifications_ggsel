@@ -4,7 +4,7 @@ import random
 from typing import Literal
 from string import ascii_lowercase
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from loader import bot
 from config import USER_ID
@@ -57,26 +57,29 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         await asyncio.sleep(3)
         async with ClientSession() as session:
             await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
-        await asyncio.sleep(3)
+        await asyncio.sleep(10)
         url = 'https://api.nexus-shop.ru/api/Supercell/login'
         data = {
             'game': game,
             'email': email,
         }
-        async with ClientSession() as session:
-            response = await session.post(url, headers=headers, json=data)
-            data = await response.text()
         try:
-            data = json.loads(data)
+            async with ClientSession(timeout=ClientTimeout(10)) as session:
+                response = await session.post(url, headers=headers, json=data)
+                data = await response.text()
+            try:
+                data = json.loads(data)
+            except:
+                await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+                await asyncio.sleep(3)
+                continue
+            if not data.get('ok') is True:
+                await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
+                await asyncio.sleep(3)
+                continue
+            else:
+                await bot.send_message(USER_ID, 'Код успешно доставлен')
+                return True
         except:
-            await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-            await asyncio.sleep(3)
             continue
-        if not data.get('ok') is True:
-            await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-            await asyncio.sleep(3)
-            continue
-        else:
-            await bot.send_message(USER_ID, 'Код успешно доставлен')
-            return True
     return False
