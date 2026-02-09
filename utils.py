@@ -50,10 +50,10 @@ async def send_message(chat_id: int, text: str):
 
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')
-    subprocess.run(['systemctl', 'restart', 'tor'])
-    await asyncio.sleep(5)
-    print('started')
     for _ in range(5):
+        subprocess.run(['systemctl', 'restart', 'tor'])
+        await asyncio.sleep(5)
+        print('started')
         if 'Authorization' in headers:
             del headers['Authorization']
         user_id = random.randint(1, 100000000)
