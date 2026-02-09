@@ -6,7 +6,7 @@ from string import ascii_lowercase
 import subprocess
 
 from aiohttp import ClientSession, ClientTimeout
-from aiohttp_proxy import ProxyConnector
+from aiohttp_proxy import ProxyConnector, ProxyType
 
 from loader import bot
 from config import USER_ID
@@ -43,7 +43,7 @@ def create_connector():
     return ProxyConnector(
         host='127.0.0.1',
         port=9050,
-        proto='socks5',
+        proxy_type=ProxyType.SOCKS5,
     )
 
 async def send_message(chat_id: int, text: str):
