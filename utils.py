@@ -46,6 +46,14 @@ def create_connector():
         proto='socks5',
     )
 
+async def send_message(chat_id: int, text: str):
+    for _ in range(3):
+        try:
+            await bot.send_message(chat_id, text)
+            return
+        except:
+            await asyncio.sleep(3)
+
 
 async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
     assert game in ('scroll', 'laser', 'magic')

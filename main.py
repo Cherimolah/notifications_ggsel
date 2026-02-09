@@ -1,7 +1,8 @@
+import asyncio
 from contextlib import asynccontextmanager
 import re
 
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from aiogram import Dispatcher
 from pydantic import BaseModel
@@ -12,7 +13,7 @@ import uvicorn
 from config import GGSEL_TOKEN, ADMIN_ID, SELLER_ID
 from ggsel import GGSel
 from database import connect
-from utils import send_verification_code
+from utils import send_verification_code, send_message
 from loader import bot
 
 
@@ -72,19 +73,19 @@ async def index():
 
 
 @app.post('/check')
-async def check_order_params(check_params: CheckParams, task: BackgroundTasks):
+async def check_order_params(check_params: CheckParams):
     item = await ggsel.get_product_info(check_params.product.id)
     reply = f'Хмммм, какой-то кельпастник собирается купить {item.product.name}'
     for option in check_params.options:
         if option.type == 'text':
             if not re.match(email_pattern, option.value):
                 return PlainTextResponse('invalid email', status_code=400)
-    task.add_task(bot.send_message, ADMIN_ID, reply)
+    asyncio.create_task(send_message(ADMIN_ID, reply))
     return PlainTextResponse('thx', status_code=200)
 
 
 @app.post('/notification')
-async def notification_route(notification: Notification, task: BackgroundTasks):
+async def notification_route(notification: Notification):
     item = await ggsel.get_product_info(notification.id_d)
     reply = f'🛒 Афигеть! Какой-то кельпастник оплатил товар! Выдай ему\n\n'
     reply += (f'Товар: {item.product.name}\n'
@@ -96,17 +97,17 @@ async def notification_route(notification: Notification, task: BackgroundTasks):
         reply += f'• {option.name}: {option.user_data}\n'
         if 'id' in option.name.lower():
             email = option.user_data
-    task.add_task(bot.send_message, ADMIN_ID, reply)
+    asyncio.create_task(send_message(ADMIN_ID, reply))
     for game, code in game_codes.items():
         if game in item.product.name.lower():
             break
     else:
         raise Exception()
-    task.add_task(send_verification_code, email, code)
-    task.add_task(ggsel.send_message, notification.id_i,
+    asyncio.create_task(send_verification_code(email, code))
+    asyncio.create_task(ggsel.send_message(notification.id_i,
                   f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру «{game}».\n'
                   f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
-                  f'Если код не пришел, напишите в чате, отправим вручную повторно')
+                  f'Если код не пришел, напишите в чате, отправим вручную повторно'))
     return PlainTextResponse('thx', status_code=200)
 
 
