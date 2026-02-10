@@ -17,4 +17,4 @@ DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
-USER_ID = os.getenv('USER_ID')
+CAPTCHA_TOKEN = os.getenv("CAPTCHA_TOKEN")

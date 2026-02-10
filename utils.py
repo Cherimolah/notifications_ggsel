@@ -1,42 +1,89 @@
 import asyncio
-import json
-import random
+import hmac
+import base64
+import urllib
+import uuid
+import time
 from typing import Literal
-from string import ascii_lowercase
-import subprocess
 
-from aiohttp import ClientSession, ClientTimeout
-from aiohttp_socks import ProxyConnector
+import aiohttp
 
-from loader import bot
-from config import USER_ID
+from loader import bot, ggsel
+from config import CAPTCHA_TOKEN, ADMIN_ID
 
 
-game_ids = {
-    'scroll': 9,
-    'laser': 11,
-    'magic': 8
+games_data = {
+    'magic': {
+        'rfp_key': '64b9add2163812f8838e1588c544210f1a7044083f183aba0fba84d415c166b1',
+        'site_key': '6LdAVCIqAAAAALFFhSHedUzchtFhnsJeucdWU_QN',
+        'user-agent': 'scid/1.12.11 (Android 9; magic-prod; SM-S906N) com.supercell.clashofclans/18.0.10',
+        'package_name': 'com.supercell.clashofclans'
+    },
+    'scroll': {
+        'rfp_key': 'ca7088324e650669790965bded7a0e4bc8ef0384bf48791c9538443a9bf1485b',
+        'site_key': '6LcxMCIqAAAAAIVTklRevyZkoCh3meCiSJDRTwc1',
+        'user-agent': 'scid/1.12.11 (Android 9; scroll-prod; SM-S906N) com.supercell.clashroyale/130300033.130300033',
+        'package_name': 'com.supercell.clashroyale'
+    },
+    'laser': {
+        'rfp_key': 'ae584daf58a3757be21fb506dfcfc478fad4600e688d5bb6f3e51ccb2ebfc373',
+        'site_key': '6Lf3ThsqAAAAABuxaWIkogybKxfxoKxtR-aq5g7l',
+        'user-agent': 'scid/1.12.16 (Android 9; laser-prod; SM-S906N) com.supercell.brawlstars/65.219.65219',
+        'package_name': 'com.supercell.brawlstars'
+    }
 }
 
 
-headers = {
-    'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate, br, zstd',
-    'Accept-Language': 'ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7',
-    'Connection': 'keep-alive',
-    'Content-Type': 'application/json',
-    'Host': 'api.nexus-shop.ru',
-    'Origin': 'https://miniapp.nexus-shop.ru',
-    'Pragma': 'no-cache',
-    'Referer': 'https://miniapp.nexus-shop.ru/',
-    'Sec-Ch-Ua': '"Not(A:Brand";v="8", "Chromium";v="144", "Microsoft Edge";v="144", "Microsoft Edge WebView2";v="144"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': 'Windows',
-    'Sec-Fetch-Dest': 'empty',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Site': 'same-site',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0'
-}
+def sign(timestamp: int, path: str, method: str, body: str, headers: dict[str, str], game: str) -> str:
+    key = bytes.fromhex(games_data[game]['rfp_key'])
+
+    headers_str = ""
+    headers_value_str = ""
+    for header in ("Authorization", "User-Agent", "X-Supercell-Device-Id"):
+        if header in headers:
+            header_lower = header.lower()
+            if len(headers_str) > 0:
+                headers_str += ";"
+            headers_str += header_lower
+            headers_value_str += header_lower + "=" + headers[header]
+
+    to_sign = f"{timestamp}{method}{path}{body}{headers_value_str}"
+    x = hmac.digest(key, to_sign.encode("utf-8"), "sha256")
+    xb = base64.b64encode(x).decode("utf-8").replace("+", "-").replace("/", "_").replace("=", "")
+    return f"RFPv1 Timestamp={timestamp},SignedHeaders={headers_str},Signature={xb}"
+
+
+async def solve_captcha(game: str) -> str:
+    data = {
+        "clientKey": CAPTCHA_TOKEN,
+        "task": {
+            "type": "RecaptchaMobileTaskProxyLess",
+            "appPackageName": games_data[game]['package_name'],
+            "appKey": games_data[game]['site_key'],
+            "appAction": "BEGIN_LOGIN",
+            "appDevice": "Android",
+        }
+    }
+    async with aiohttp.ClientSession() as session:
+        response = await session.post("https://api.nextcaptcha.com/createTask", json=data)
+        data = await response.json()
+        task_id = data["taskId"]
+    await asyncio.sleep(5)
+    while True:
+        data = {
+            "clientKey": CAPTCHA_TOKEN,
+            "taskId": task_id
+        }
+        async with aiohttp.ClientSession() as session:
+            response = await session.post("https://api.nextcaptcha.com/getTaskResult", json=data)
+            data = await response.json()
+            if data['status'] != 'processing':
+                token = data.get('solution').get('gRecaptchaResponse')
+                break
+            await asyncio.sleep(5)
+    if not token:
+        raise Exception("Failed to get captcha token")
+    return token
 
 
 async def send_message(chat_id: int, text: str):
@@ -48,51 +95,52 @@ async def send_message(chat_id: int, text: str):
             await asyncio.sleep(3)
 
 
-async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic']) -> bool:
+async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'magic'], id_i: int):
     assert game in ('scroll', 'laser', 'magic')
-    for _ in range(5):
-        subprocess.run(['systemctl', 'restart', 'tor'])
-        await asyncio.sleep(5)
-        if 'Authorization' in headers:
-            del headers['Authorization']
-        user_id = random.randint(1, 100000000)
-        data = {
-            'userId': user_id,
-            'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
-            'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
-        }
-        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050'), timeout=ClientTimeout(10)) as session:
-            response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
+    try:
+        solution = await solve_captcha(game)
+    except:
+        await ggsel.send_message(id_i,
+                                 f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
+                                 f'Подождите ответа продавца')
+        await bot.send_message(ADMIN_ID, 'Капча не создана')
+        return
+    ts = int(time.time())
+    host = "https://id.supercell.com"
+    path = "/api/ingame/account/login"
+    body = urllib.parse.urlencode({
+        "lang": "ru",
+        "email": email,
+        "remember": "true",
+        "game": game,
+        "env": "prod",
+        "unified_flow": "LOGIN",
+        "recaptchaToken": solution,
+        "recaptchaSiteKey": games_data[game]['site_key']
+    })
+    headers = {
+        "User-Agent": games_data[game]['user-agent'],
+        "Accept-Language": "ru",
+        "Accept-Encoding": "gzip, deflate, br",
+        'Content-Length': str(len(body)),
+        'Host': 'id.supercell.com',
+        "X-Supercell-Device-Id": str(uuid.uuid4()),
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        "Connection": 'keep-alive'
+    }
+    headers["X-Supercell-Request-Forgery-Protection"] = sign(ts, path, "POST", body, headers, game)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{host}{path}", headers={k.lower(): v for k, v in headers.items()},
+                                data=body) as response:
             data = await response.json()
-        token = data['token']
-        headers['Authorization'] = f'Bearer {token}'
-        data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
-        await asyncio.sleep(3)
-        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050'), timeout=ClientTimeout(10)) as session:
-            await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
-        url = 'https://api.nexus-shop.ru/api/Supercell/login'
-        data = {
-            'game': game,
-            'email': email,
-        }
-        try:
-            async with ClientSession(timeout=ClientTimeout(10), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
-                response = await session.post(url, headers=headers, json=data)
-                data = await response.text()
-            try:
-                data = json.loads(data)
-            except:
-                await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-                await asyncio.sleep(3)
-                continue
-            if not data.get('ok') is True:
-                await bot.send_message(USER_ID, f'Ошибка доставки кода {data}')
-                await asyncio.sleep(3)
-                continue
-            else:
-                await bot.send_message(USER_ID, 'Код успешно доставлен')
-                return True
-        except:
-            await bot.send_message(USER_ID, 'Таймаут еррор')
-            continue
-    return False
+    if data.get("ok"):
+        await ggsel.send_message(id_i,
+                           f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру «{game}».\n'
+                           f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
+                           f'Если код не пришел, напишите в чате, отправим вручную повторно')
+        await bot.send_message(ADMIN_ID, 'Код успешно отправлен')
+    else:
+        await ggsel.send_message(id_i,
+                                 f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
+                                 f'Подождите ответа продавца')
+        await bot.send_message(ADMIN_ID, 'Суперы забраковали')

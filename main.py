@@ -10,11 +10,10 @@ from aiogram.filters.command import CommandStart
 from aiogram.types import Message
 import uvicorn
 
-from config import GGSEL_TOKEN, ADMIN_ID, SELLER_ID
-from ggsel import GGSel
+from config import ADMIN_ID
 from database import connect
 from utils import send_verification_code, send_message
-from loader import bot
+from loader import bot, ggsel
 
 
 @asynccontextmanager
@@ -26,7 +25,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 dp = Dispatcher()
-ggsel = GGSel(GGSEL_TOKEN, SELLER_ID)
 email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 
@@ -103,11 +101,7 @@ async def notification_route(notification: Notification):
             break
     else:
         raise Exception()
-    asyncio.create_task(send_verification_code(email, code))
-    asyncio.create_task(ggsel.send_message(notification.id_i,
-                  f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру «{game}».\n'
-                  f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
-                  f'Если код не пришел, напишите в чате, отправим вручную повторно'))
+    asyncio.create_task(send_verification_code('zapzerohenderson@gmail.com', 'scroll', notification.id_i))
     return PlainTextResponse('thx', status_code=200)
 
 
