@@ -76,7 +76,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'email': email,
         }
         try:
-            async with ClientSession(timeout=ClientTimeout(10), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
+            async with ClientSession(timeout=ClientTimeout(15), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
                 response = await session.post(url, headers=headers, json=data)
                 data = await response.text()
             try:
@@ -93,5 +93,6 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
                 await bot.send_message(USER_ID, 'Код успешно доставлен')
                 return True
         except:
+            await bot.send_message(USER_ID, 'Таймаут еррор')
             continue
     return False
