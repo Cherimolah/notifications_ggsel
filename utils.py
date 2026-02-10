@@ -61,14 +61,14 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'fullName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
             'userName': ''.join(random.choices(ascii_lowercase, k=random.randint(4, 15))),
         }
-        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
+        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050'), timeout=ClientTimeout(10)) as session:
             response = await session.post('https://api.nexus-shop.ru/api/appuser/login', headers=headers, json=data)
             data = await response.json()
         token = data['token']
         headers['Authorization'] = f'Bearer {token}'
         data = {"userId":user_id,"gameId":game_ids[game],"gameLink":email}
         await asyncio.sleep(3)
-        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
+        async with ClientSession(connector=ProxyConnector.from_url('socks5://127.0.0.1:9050'), timeout=ClientTimeout(10)) as session:
             await session.post('https://api.nexus-shop.ru/api/UserGameLink/add', headers=headers, json=data)
         url = 'https://api.nexus-shop.ru/api/Supercell/login'
         data = {
@@ -76,7 +76,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             'email': email,
         }
         try:
-            async with ClientSession(timeout=ClientTimeout(15), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
+            async with ClientSession(timeout=ClientTimeout(10), connector=ProxyConnector.from_url('socks5://127.0.0.1:9050')) as session:
                 response = await session.post(url, headers=headers, json=data)
                 data = await response.text()
             try:
