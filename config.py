@@ -18,3 +18,10 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_NAME = os.getenv('DB_NAME')
 
 CAPTCHA_TOKEN = os.getenv("CAPTCHA_TOKEN")
+
+
+PROXY_IP = os.getenv("PROXY_IP")
+PROXY_PORT = int(os.getenv("PROXY_PORT"))
+PROXY_USER = os.getenv("PROXY_USER")
+PROXY_PASSWORD = os.getenv("PROXY_PASSWORD")
+PROXY_TYPE = os.getenv("PROXY_TYPE")

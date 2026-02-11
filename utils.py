@@ -4,12 +4,14 @@ import base64
 import urllib
 import uuid
 import time
+import subprocess
 from typing import Literal
 
 import aiohttp
+from aiohttp_socks import ProxyConnector
 
 from loader import bot, ggsel
-from config import CAPTCHA_TOKEN, ADMIN_ID
+from config import CAPTCHA_TOKEN, ADMIN_ID, PROXY_IP, PROXY_PORT, PROXY_TYPE, PROXY_USER, PROXY_PASSWORD
 
 
 games_data = {
@@ -57,11 +59,16 @@ async def solve_captcha(game: str) -> str:
     data = {
         "clientKey": CAPTCHA_TOKEN,
         "task": {
-            "type": "RecaptchaMobileTaskProxyLess",
+            "type": "RecaptchaMobileTask",
             "appPackageName": games_data[game]['package_name'],
             "appKey": games_data[game]['site_key'],
             "appAction": "BEGIN_LOGIN",
             "appDevice": "Android",
+            'proxyType': PROXY_TYPE,
+            'proxyAddress': PROXY_IP,
+            'proxyPort': PROXY_PORT,
+            'proxyLogin': PROXY_USER,
+            'proxyPassword': PROXY_PASSWORD
         }
     }
     async with aiohttp.ClientSession() as session:
@@ -129,7 +136,10 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         "Connection": 'keep-alive'
     }
     headers["X-Supercell-Request-Forgery-Protection"] = sign(ts, path, "POST", body, headers, game)
-    async with aiohttp.ClientSession() as session:
+    subprocess.run(['systemctl', 'restart', 'tor'])
+    await asyncio.sleep(1)
+    connector = ProxyConnector.from_url('socks5://127.0.0.1:9050')
+    async with aiohttp.ClientSession(connector=connector) as session:
         async with session.post(f"{host}{path}", headers={k.lower(): v for k, v in headers.items()},
                                 data=body) as response:
             data = await response.json()
