@@ -135,7 +135,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
             data = await response.json()
     if data.get("ok"):
         await ggsel.send_message(id_i,
-                           f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру «{game}».\n'
+                           f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру.\n'
                            f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
                            f'Если код не пришел, напишите в чате, отправим вручную повторно')
         await bot.send_message(ADMIN_ID, 'Код успешно отправлен')
