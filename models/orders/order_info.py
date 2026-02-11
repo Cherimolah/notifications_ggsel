@@ -16,7 +16,7 @@ class InvoiceState(IntEnum):
 
 class UniqueCodeStateInfo(BaseModel):
     """Информация о состоянии уникального кода"""
-    state: int
+    state: Any
     date_check: Optional[datetime] = None
     date_delivery: Optional[datetime] = None
     date_confirmed: Optional[datetime] = None
