@@ -29,7 +29,7 @@ games_data = {
     },
     'laser': {
         'rfp_key': 'ae584daf58a3757be21fb506dfcfc478fad4600e688d5bb6f3e51ccb2ebfc373',
-        'site_key': '6Lf3ThsqAAAAABuxaWIkogybKxfxoKxtR-aq5g7l',
+        'site_key': '6LcBWxsqAAAAAJ4zUt4bdfgglSBdrW41BSQn-AIs',
         'user-agent': 'scid/1.12.16 (Android 9; laser-prod; SM-S906N) com.supercell.brawlstars/65.219.65219',
         'package_name': 'com.supercell.brawlstars'
     }
@@ -62,7 +62,7 @@ async def solve_captcha(game: str) -> str:
             "type": "RecaptchaMobileTask",
             "appPackageName": games_data[game]['package_name'],
             "appKey": games_data[game]['site_key'],
-            "appAction": "BEGIN_LOGIN",
+            "appAction": "BEGIN_CONNECT",
             "appDevice": "Android",
             'proxyType': PROXY_TYPE,
             'proxyAddress': PROXY_IP,
@@ -114,16 +114,15 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         return
     ts = int(time.time())
     host = "https://id.supercell.com"
-    path = "/api/ingame/account/login"
+    path = "/api/account/v2/pinAuthentication.start"
     body = urllib.parse.urlencode({
-        "lang": "ru",
-        "email": email,
-        "remember": "true",
-        "game": game,
-        "env": "prod",
-        "unified_flow": "LOGIN",
-        "recaptchaToken": solution,
-        "recaptchaSiteKey": games_data[game]['site_key']
+        'scope': 'account/connect',
+        'identifier': email,
+        'identifierType': 'EMAIL',
+        'application': f'{game}-prod',
+        'recaptchaToken': solution,
+        'recaptchaSiteKey': games_data[game]['site_key'],
+        'intent': 'LOGIN'
     })
     headers = {
         "User-Agent": games_data[game]['user-agent'],
@@ -131,7 +130,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         "Accept-Encoding": "gzip, deflate, br",
         'Content-Length': str(len(body)),
         'Host': 'id.supercell.com',
-        "X-Supercell-Device-Id": str(uuid.uuid4()),
+        "X-Supercell-Device-Id": '05db444d837901c4',
         "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
         "Connection": 'keep-alive'
     }

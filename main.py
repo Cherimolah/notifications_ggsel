@@ -101,7 +101,7 @@ async def notification_route(notification: Notification):
             break
     else:
         raise Exception()
-    asyncio.create_task(send_verification_code(email, code, notification.id_i))
+    asyncio.create_task(send_verification_code(email, game, notification.id_i))
     return PlainTextResponse('thx', status_code=200)
 
 
