@@ -136,10 +136,10 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         "Connection": 'keep-alive'
     }
     headers["X-Supercell-Request-Forgery-Protection"] = sign(ts, path, "POST", body, headers, game)
-    subprocess.run(['systemctl', 'restart', 'tor'])
-    await asyncio.sleep(1)
-    connector = ProxyConnector.from_url('socks5://127.0.0.1:9050')
-    async with aiohttp.ClientSession(connector=connector) as session:
+    # subprocess.run(['systemctl', 'restart', 'tor'])
+    # await asyncio.sleep(1)
+    # connector = ProxyConnector.from_url('socks5://127.0.0.1:9050')
+    async with aiohttp.ClientSession() as session:
         async with session.post(f"{host}{path}", headers={k.lower(): v for k, v in headers.items()},
                                 data=body) as response:
             data = await response.json()
