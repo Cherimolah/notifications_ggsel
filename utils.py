@@ -130,7 +130,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
         "Accept-Encoding": "gzip, deflate, br",
         'Content-Length': str(len(body)),
         'Host': 'id.supercell.com',
-        "X-Supercell-Device-Id": '05db444d837901c4',
+        "X-Supercell-Device-Id": str(uuid.uuid4()),
         "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
         "Connection": 'keep-alive'
     }
