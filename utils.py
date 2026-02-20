@@ -107,9 +107,9 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     try:
         solution = await solve_captcha(game)
     except:
-        await ggsel.send_message(id_i,
-                                 f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
-                                 f'Подождите ответа продавца')
+        # await ggsel.send_message(id_i,
+        #                          f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
+        #                          f'Подождите ответа продавца')
         await bot.send_message(ADMIN_ID, 'Капча не создана')
         return
     ts = int(time.time())
@@ -143,13 +143,16 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
                                 data=body) as response:
             data = await response.json()
     if data.get('ok') is True:
-        await ggsel.send_message(id_i,
-                           f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру.\n'
-                           f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
-                           f'Если код не пришел, напишите в чате, отправим вручную повторно')
+        # await ggsel.send_message(id_i,
+        #                    f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру.\n'
+        #                    f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
+        #                    f'Если код не пришел, напишите в чате, отправим вручную повторно')
         await bot.send_message(ADMIN_ID, 'Код успешно отправлен')
     else:
-        await ggsel.send_message(id_i,
-                                 f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
-                                 f'Подождите ответа продавца')
+        # await ggsel.send_message(id_i,
+        #                          f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
+        #                          f'Подождите ответа продавца')
         await bot.send_message(ADMIN_ID, 'Суперы забраковали')
+
+if __name__ == '__main__':
+    asyncio.run(send_verification_code('ykrasnoye@inbox.ru', 'magic', 0))
