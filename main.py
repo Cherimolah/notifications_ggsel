@@ -4,6 +4,8 @@ import re
 
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.requests import Request
 from aiogram import Dispatcher
 from pydantic import BaseModel
 from aiogram.filters.command import CommandStart
@@ -63,6 +65,15 @@ game_codes = {
     'clash royale': 'scroll',
     'brawl stars': 'laser'
 }
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Вместо подробного списка ошибок возвращаем простое сообщение
+    return PlainTextResponse(
+        status_code=422,
+        content='bruh......',
+    )
 
 
 @app.get('/')
