@@ -107,6 +107,7 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
     try:
         solution = await solve_captcha(game)
     except:
+        await asyncio.sleep(15)
         await ggsel.send_message(id_i,
                                  f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
                                  f'Подождите ответа продавца')
@@ -143,12 +144,14 @@ async def send_verification_code(email: str, game: Literal['scroll', 'laser', 'm
                                 data=body) as response:
             data = await response.json()
     if data.get('ok') is True:
+        await asyncio.sleep(15)
         await ggsel.send_message(id_i,
                            f'Здравствуйте! На указанную вами почту «{email}» автоматически был отправлен код для входа в игру.\n'
                            f'Отправьте его в чат, в ближайшее время оператор зайдет в аккаунт и доставит товар.\n'
                            f'Если код не пришел, напишите в чате, отправим вручную повторно')
         await bot.send_message(ADMIN_ID, 'Код успешно отправлен')
     else:
+        await asyncio.sleep(15)
         await ggsel.send_message(id_i,
                                  f'Здравствуйте! К сожалению, нам не удалось сформировать запрос на отправку кода :(\n'
                                  f'Подождите ответа продавца')
